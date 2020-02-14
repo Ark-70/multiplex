@@ -1,5 +1,5 @@
 clear, close all, clc;
-addpath("teb_libs");
+
 %% PARAMÊTRES
 % -------------------------------------------------------------------------
 
@@ -10,11 +10,10 @@ BRUIT_ON = 1;
 CANAL_TYPE = 'Rayleigh'; % 'Rayleigh' ou 'AWGN'
 ANNULATION_ON = 0;
 EGALISEUR_ON = 1;
-TEB_LOOP_ON = 1;
 
 % Constantes générales
 
-Mmod=2; % M-PSK
+M=2; % M-PSK
 Ts = 0.05e-6;
 Fe = 1/Ts;
 RSB = 5; % Définit l'amplitude du bruit
@@ -32,46 +31,19 @@ L = 2; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
 
 Nbits = N*K;
 nbMod = Nbits/N;
-
 if(garde < L)
     fprintf("Warning : De l'IES va apparaitre à cause d'un intervalle de garde trop court.\n");
 end
 
-if(~PREFIX_CYCL_ON)
-    garde = 0;
-end
-
-if(~TEB_LOOP_ON)
-    EbN0dB = RSB
-end
-
 % Blocs de com
 
-PSKMod   = comm.PSKModulator(Mmod,'BitInput',true,'PhaseOffset',0);
-PSKDemod = comm.PSKDemodulator(Mmod);
-stat_erreur = comm.ErrorRate;
-
-%% LOOP DE TEB/Variation EdBN0
-
-config_teb_table;
-
-for i_snr = 1:length(EbN0dB)
-    reverseStr = ''; % Pour affichage en console
-
-    stat_erreur.reset; % reset du compteur d'erreur
-    err_stat    = [0 0 0]; % vecteur r�sultat de stat_erreur
-
-    % demod_psk.Variance = awgn_channel.Variance;
-
-    n_frame = 0;
-    T_rx = 0;
-    T_tx = 0;
-    general_tic = tic;
-    while (err_stat(2) < nbr_erreur && err_stat(3) < nbr_bit_max)
-        n_frame = n_frame + 1;
+PSKMod   = comm.PSKModulator(M,'BitInput',true,'PhaseOffset',0);
+PSKDemod = comm.PSKDemodulator(M);
+errorRate = comm.ErrorRate;
 
 %% CHAÎNE DE COM
 % -------------------------------------------------------------------------
+
 %% ÉMETTEUR
 % -------------------------------------------------------------------------
 
@@ -111,6 +83,8 @@ if (PREFIX_CYCL_ON)
 
     % Parallèle -> Série
     echantillon = reshape(matriceTrames, (garde+N)*K, 1);
+else
+    garde = 0;
 end
 
 
@@ -174,72 +148,9 @@ end
 
 % Demodulation
 bitstream = step(PSKDemod, symbolesRecus);
-errorStats = stat_erreur(bits,bitstream);
-
-% if(~TEB_LOOP_ON)
-%     fprintf('Error rate = %f\nNumber of errors = %d\n', ...
-%     errorStats(1), errorStats(2));
-% end
-
-%% Affichage d'une ligne de TEB
-    err_stat   = step(stat_erreur, bits, bitstream); % Comptage des erreurs binaires
-
-    if mod(n_frame,100) == 1
-
-        debit_encod = err_stat(3)/8/T_tx/1e3;
-        debit_decod = err_stat(3)/8/T_rx/1e3;
-
-        display_str = sprintf(msg_format,...
-            EbN0dB(i_snr),         ... % EbN0 en dB
-            err_stat(3),           ... % Nombre de bits envoy�s
-            err_stat(2),           ... % Nombre d'erreurs observ�es
-            err_stat(1),           ... % BER
-            debit_encod,... % D�bit d'encodage
-            debit_decod,... % D�bit de d�codage
-            toc(general_tic)*(nbr_erreur - min(err_stat(2),nbr_erreur))/nbr_erreur); % Temps restant
-        fprintf(reverseStr);
-        msg_sz =  fprintf(display_str);
-        reverseStr = repmat(sprintf('\b'), 1, msg_sz);
-    end
-%% Fin de la Loop_de_TEB
-
-        if(~TEB_LOOP_ON)
-            break;
-        end
-    end%while
-
-    debit_encod = err_stat(3)/8/T_tx/1e3;
-    debit_decod = err_stat(3)/8/T_rx/1e3;
-
-    debits_encod = [debits_encod debit_encod];
-    debits_decod = [debits_decod debit_decod];
-
-    display_str = sprintf(msg_format,EbN0dB(i_snr), err_stat(3), err_stat(2), err_stat(1), err_stat(3)/8/T_tx/1e3, err_stat(3)/8/T_rx/1e3, toc(general_tic)*(100 - min(err_stat(2),100))/100);
-    fprintf(reverseStr);
-    msg_sz =  fprintf(display_str);
-    reverseStr = repmat(sprintf('\b'), 1, msg_sz);
-
-    ber(i_snr) = err_stat(1);
-    refreshdata(h_ber);
-    drawnow limitrate
-
-    if err_stat(1) < ber_min
-        break
-    end
-
-end%for
-%% Affichage final
-
-figure(1)
-semilogy(EbN0dB,ber);
-hold all
-xlim([0 10])
-ylim([1e-6 1])
-grid on
-xlabel('$\frac{E_b}{N_0}$ en dB','Interpreter', 'latex', 'FontSize',14)
-ylabel('TEB','Interpreter', 'latex', 'FontSize',14)
-title('TEB pour chaque code');
-legend('C(2,3)_8');
+errorStats = errorRate(bits,bitstream);
+fprintf('Error rate = %f\nNumber of errors = %d\n', ...
+    errorStats(1), errorStats(2));
 
 
 %% questions :
