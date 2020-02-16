@@ -23,10 +23,10 @@ RSB = 5; % Définit l'amplitude du bruit
 
 K = 500; % symboles OFDM d'une trame OFDM
 N = 128; % Nombre de sous-porteuses totales
-garde = 4; % intervalle de garde
+garde = 16; % intervalle de garde
 annulation = 4;
 L = 16; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
-nbTrames = 1; % = Nbits/500/128 == toute la matrice temps-frequence OFDM
+nbTrames = 64; % = Nbits/500/128 == toute la matrice temps-frequence OFDM
 
 %% PARAMÊTRES CALCULÉS
 % -------------------------------------------------------------------------
@@ -101,28 +101,28 @@ end
 
 
 %% Préfix
-matriceTrames = reshape(echantillon, [N K]);
+matriceTrames = reshape(echantillon, [N K*nbTrames]);
 test1 = matriceTrames;
 if (PREFIX_CYCL_ON)
 
     % Série -> Parallèle
-    matriceTrames = reshape(echantillon, [N K]); % premiere trame = 1ere colonne
+    matriceTrames = reshape(echantillon, [N K*nbTrames]); % premiere trame = 1ere colonne
 
     suffixACopier = matriceTrames(end-garde+1:end,:);
     matriceTrames = [ suffixACopier ; matriceTrames ];
 
     % Parallèle -> Série
-    echantillon = reshape(matriceTrames, (garde+N)*K, 1);
+    echantillon = reshape(matriceTrames, (garde+N)*K*nbTrames, 1);
 end
 
 
 %% CANAL
 % -------------------------------------------------------------------------
 
-if (CANAL_TYPE == 'Rayleigh')
+if (strcmp(CANAL_TYPE, 'Rayleigh')==0 )
     % Génération de gaussiennes complexes comme composantes de canal
     h = sqrt(1/2*L)*(randn(1,L)+1j*randn(1,L));
-elseif (CANAL_TYPE == 'AWGN')
+elseif (strcmp(CANAL_TYPE, 'AWGN')==0 )
     h = 1;
 end
 
@@ -142,7 +142,7 @@ y = filter(h, 1, y);
 
 % Série -> Parallèle
 
-matriceTrames = reshape(y, [N+garde K]); % premiere trame = 1ere colonne
+matriceTrames = reshape(y, [N+garde K*nbTrames]); % premiere trame = 1ere colonne
 
 %% On enlève le prefix
 
@@ -162,13 +162,13 @@ test2 = matriceTrames;
 matriceTrames = fft(matriceTrames, N)/sqrt(N);
 
 %% Parallèle -> Série
-symbolesRecus = reshape(matriceTrames, N*K, 1);
+symbolesRecus = reshape(matriceTrames, N*K*nbTrames, 1);
 
 %% Egaliseur
 
 %
 if(EGALISEUR_ON)
-    Hprep = repmat(H.', 500, 1); % .' parce qu'on veut pas le conjugué mais la transposée
+    Hprep = repmat(H.', K*nbTrames, 1); % .' parce qu'on veut pas le conjugué mais la transposée
     symbolesRecus = symbolesRecus./Hprep;
 end
 
@@ -188,7 +188,7 @@ errorStats = stat_erreur(bits,bitstream);
 
     if mod(n_frame,100) == 1
 
-        debit_encod = err_stat(3)/8/T_tx/1e3;
+        debit_encod = err_stat(3)/8/T_tx/1e3; % 8 = octet?
         debit_decod = err_stat(3)/8/T_rx/1e3;
 
         display_str = sprintf(msg_format,...
