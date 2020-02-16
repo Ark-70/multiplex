@@ -25,23 +25,24 @@ K = 500; % symboles OFDM d'une trame OFDM
 N = 128; % Nombre de sous-porteuses totales
 garde = 4; % intervalle de garde
 annulation = 4;
-L = 2; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
+L = 16; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
+nbTrames = 1; % = Nbits/500/128 == toute la matrice temps-frequence OFDM
 
 %% PARAMÊTRES CALCULÉS
 % -------------------------------------------------------------------------
 
-Nbits = N*K;
+Nbits = N*K*nbTrames;
 nbMod = Nbits/N;
 
-if(garde < L)
+if (garde < L)
     fprintf("Warning : De l'IES va apparaitre à cause d'un intervalle de garde trop court.\n");
 end
 
-if(~PREFIX_CYCL_ON)
+if (~PREFIX_CYCL_ON)
     garde = 0;
 end
 
-if(~TEB_LOOP_ON)
+if (~TEB_LOOP_ON)
     EbN0dB = RSB
 end
 
@@ -56,6 +57,7 @@ stat_erreur = comm.ErrorRate;
 config_teb_table;
 
 for i_snr = 1:length(EbN0dB)
+    RSB = EbN0dB(i_snr);
     reverseStr = ''; % Pour affichage en console
 
     stat_erreur.reset; % reset du compteur d'erreur
