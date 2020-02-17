@@ -2,9 +2,9 @@
 
 R = 1; % ici seuleument
 
-EbN0dB_min  = -2; % Minimum de EbN0
-EbN0dB_max  = 10; % Maximum de EbN0
-EbN0dB_step = 0.5;% Pas de EbN0
+EbN0dB_min  = 0; % Minimum de EbN0
+EbN0dB_max  = 15; % Maximum de EbN0
+EbN0dB_step = 1;% Pas de EbN0
 
 nbr_erreur  = 200;  % Nombre d'erreurs à observer avant de calculer un BER
 nbr_bit_max = 100e6;% Nombre de bits max à simuler
@@ -14,6 +14,10 @@ EbN0dB = EbN0dB_min:EbN0dB_step:EbN0dB_max;     % Points de EbN0 en dB à simule
 EbN0   = 10.^(EbN0dB/10);% Points de EbN0 à simuler
 EsN0   = R*log2(Mmod)*EbN0; % Points de EsN0
 EsN0dB = 10*log10(EsN0); % Points de EsN0 en dB à simuler
+
+% Là, on a configuré le EbN0dB_sousporteuse
+EbN0dB_sousporteuse = EbN0dB;
+EbN0dB = EbN0dB_sousporteuse./(abs(H).^2);
 
 
 %% Variables init
@@ -28,7 +32,8 @@ Pe = qfunc(sqrt(2*EbN0));
 %% Préparation de l'affichage de la courbe
 
 figure(1)
-h_ber = semilogy(EbN0dB,ber,'XDataSource','EbN0dB', 'YDataSource','ber');
+
+h_ber = semilogy(EbN0dB, ber,'XDataSource','EbN0dB', 'YDataSource','ber');
 hold all
 ylim([1e-6 1])
 grid on

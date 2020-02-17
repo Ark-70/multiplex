@@ -52,6 +52,14 @@ PSKMod   = comm.PSKModulator(Mmod,'BitInput',true,'PhaseOffset',0);
 PSKDemod = comm.PSKDemodulator(Mmod);
 stat_erreur = comm.ErrorRate;
 
+if (strcmp(CANAL_TYPE, 'Rayleigh')==0 )
+    % Génération de gaussiennes complexes comme composantes de canal
+    h = sqrt(1/2*L)*(randn(1,L)+1j*randn(1,L));
+elseif (strcmp(CANAL_TYPE, 'AWGN')==0 )
+    h = 1;
+end
+H = fft(h, N);
+
 %% LOOP DE TEB/Variation EdBN0
 
 config_teb_table;
@@ -76,7 +84,7 @@ for i_snr = 1:length(EbN0dB)
 % -------------------------------------------------------------------------
 %% ÉMETTEUR
 % -------------------------------------------------------------------------
-
+tx_tic    = tic; % Mesure du débit d'encodage au début de l'emetteur
 
 bits = randi([0 1],Nbits,1);
 
@@ -115,18 +123,13 @@ if (PREFIX_CYCL_ON)
     echantillon = reshape(matriceTrames, (garde+N)*K*nbTrames, 1);
 end
 
+T_tx      = T_tx+toc(tx_tic); % Mesure du débit d'encodage fin de l'émetteur
+
 
 %% CANAL
 % -------------------------------------------------------------------------
 
-if (strcmp(CANAL_TYPE, 'Rayleigh')==0 )
-    % Génération de gaussiennes complexes comme composantes de canal
-    h = sqrt(1/2*L)*(randn(1,L)+1j*randn(1,L));
-elseif (strcmp(CANAL_TYPE, 'AWGN')==0 )
-    h = 1;
-end
 
-H = fft(h, N);
 
 if (BRUIT_ON)
     bruit = calculerBruit(RSB, echantillon);
@@ -139,6 +142,7 @@ y = filter(h, 1, y);
 
 %% RÉCEPTEUR
 % -------------------------------------------------------------------------
+rx_tic  = tic; % Temps t début récepteur
 
 % Série -> Parallèle
 
@@ -176,6 +180,7 @@ end
 
 % Demodulation
 bitstream = step(PSKDemod, symbolesRecus);
+T_rx    = T_rx + toc(rx_tic);  % temps t à la fin du recepteur (pour le calcul du débit)
 errorStats = stat_erreur(bits,bitstream);
 
 % if(~TEB_LOOP_ON)
@@ -231,17 +236,22 @@ errorStats = stat_erreur(bits,bitstream);
 
 end%for
 %% Affichage final
-
+load('BPSK_TEB_0_1_15.mat');
 figure(1)
-semilogy(EbN0dB,ber);
 hold all
-xlim([0 10])
+% même si pour le RSB global, c'est toujours un canal avec tel RSB global
+% Mais pour ce graph on doit faire évoluer le RSB par sous-porteuse
+% EbN0dB_sousporteuse = EbN0dB_sousporteuse*(abs(H)^2);
+semilogy(EbN0dB,BPSKbertool.data{1, 2});
+
+% semilogy(EbN0dB,ber);
+xlim([0 15])
 ylim([1e-6 1])
 grid on
 xlabel('$\frac{E_b}{N_0}$ en dB','Interpreter', 'latex', 'FontSize',14)
 ylabel('TEB','Interpreter', 'latex', 'FontSize',14)
 title('TEB pour chaque code');
-legend('C(2,3)_8');
+legend('OFDM sur canal Rayleigh', 'BPSK sur canal AWGN');
 
 
 %% questions :
