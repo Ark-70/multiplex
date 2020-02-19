@@ -1,4 +1,6 @@
-clear, close all, clc;
+clear;
+close all;
+clc;
 addpath("teb_libs");
 %% PARAMÊTRES
 % -------------------------------------------------------------------------
@@ -6,11 +8,12 @@ addpath("teb_libs");
 % Paramêtres de la chaîne de com
 
 PREFIX_CYCL_ON = 1;
-BRUIT_ON = 1;
+BRUIT_ON = 0;
 CANAL_TYPE = 'Rayleigh'; % 'Rayleigh' ou 'AWGN'
 ANNULATION_ON = 0;
 EGALISEUR_ON = 1;
 TEB_LOOP_ON = 1;
+RSB_SOUS_PORTEUSE_EN_PLOT = 1;
 
 % Constantes générales
 
@@ -23,9 +26,9 @@ RSB = 5; % Définit l'amplitude du bruit
 
 K = 500; % symboles OFDM d'une trame OFDM
 N = 128; % Nombre de sous-porteuses totales
-garde = 16; % intervalle de garde
+garde = 8; % intervalle de garde
 annulation = 4;
-L = 16; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
+L = 50; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
 nbTrames = 64; % = Nbits/500/128 == toute la matrice temps-frequence OFDM
 
 %% PARAMÊTRES CALCULÉS
@@ -109,18 +112,20 @@ end
 
 
 %% Préfix
-matriceTrames = reshape(echantillon, [N K*nbTrames]);
+matriceTrames = reshape(echantillon, [N K]);
 test1 = matriceTrames;
 if (PREFIX_CYCL_ON)
 
     % Série -> Parallèle
-    matriceTrames = reshape(echantillon, [N K*nbTrames]); % premiere trame = 1ere colonne
+    matriceTrames = reshape(echantillon, [N K]); % premiere trame = 1ere colonne
 
     suffixACopier = matriceTrames(end-garde+1:end,:);
     matriceTrames = [ suffixACopier ; matriceTrames ];
 
     % Parallèle -> Série
-    echantillon = reshape(matriceTrames, (garde+N)*K*nbTrames, 1);
+    echantillon = reshape(matriceTrames, (garde+N)*K, 1);
+else
+    garde = 0;
 end
 
 T_tx      = T_tx+toc(tx_tic); % Mesure du débit d'encodage fin de l'émetteur
@@ -128,8 +133,6 @@ T_tx      = T_tx+toc(tx_tic); % Mesure du débit d'encodage fin de l'émetteur
 
 %% CANAL
 % -------------------------------------------------------------------------
-
-
 
 if (BRUIT_ON)
     bruit = calculerBruit(RSB, echantillon);
@@ -242,7 +245,7 @@ hold all
 % même si pour le RSB global, c'est toujours un canal avec tel RSB global
 % Mais pour ce graph on doit faire évoluer le RSB par sous-porteuse
 % EbN0dB_sousporteuse = EbN0dB_sousporteuse*(abs(H)^2);
-semilogy(EbN0dB,BPSKbertool.data{1, 2});
+semilogy(EbN0dB,BPSKRayleighL16.data{1, 2});
 
 % semilogy(EbN0dB,ber);
 xlim([0 15])
@@ -251,7 +254,7 @@ grid on
 xlabel('$\frac{E_b}{N_0}$ en dB','Interpreter', 'latex', 'FontSize',14)
 ylabel('TEB','Interpreter', 'latex', 'FontSize',14)
 title('TEB pour chaque code');
-legend('OFDM sur canal Rayleigh', 'BPSK sur canal AWGN');
+legend(['OFDM sur canal Rayleigh L=16' newline '(EbN0 moyen des sous-porteuses)'], 'BPSK sur canal Rayleigh L=16');
 
 
 %% questions :

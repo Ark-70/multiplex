@@ -16,10 +16,10 @@ EsN0   = R*log2(Mmod)*EbN0; % Points de EsN0
 EsN0dB = 10*log10(EsN0); % Points de EsN0 en dB à simuler
 
 % Là, on a configuré le EbN0dB signal, on veut le RSB sous porteuses
-if(RSB_SOUS_PORTEUSE_EN_PLOT)
-    gain_moyen_du_canal = mean(abs(H).^2)
-    EbN0dB_sousporteuses_moyen = EbN0dB.*(gain_moyen_du_canal);
-end
+
+gain_moyen_du_canal = mean(abs(H).^2)
+EbN0dB_sousporteuses_moyen = EbN0dB.*(gain_moyen_du_canal);
+
 
 
 %% Variables init
@@ -29,16 +29,13 @@ debits_decod = [];
 
 %% Initialisation des vecteurs de r�sultats
 ber = zeros(1,length(EbN0dB));
-if(RSB_SOUS_PORTEUSE_EN_PLOT)
-    Pe = qfunc(sqrt(2*EbN0dB_sousporteuses_moyen));
-else
-    Pe = qfunc(sqrt(2*EbN0dB));
-end
+Pe = qfunc(sqrt(2*EbN0dB_sousporteuses_moyen));
+
 %% Préparation de l'affichage de la courbe
 
 figure(1)
 
-h_ber = semilogy(Pe, ber,'XDataSource','EbN0dB', 'YDataSource','ber');
+h_ber = semilogy(EbN0dB, ber,'XDataSource','EbN0dB', 'YDataSource','ber');
 hold all
 ylim([1e-6 1])
 grid on

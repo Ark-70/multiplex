@@ -24,11 +24,11 @@ K = 500; % symboles OFDM d'une trame OFDM
 N = 128; % Nombre de sous-porteuses totales
 garde = 16; % intervalle de garde
 annulation = 4;
-L = 16; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
+L = 50; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
 
 %% PARAMÊTRES CALCULÉS
 % -------------------------------------------------------------------------
-
+% NbTrames = 2;
 Nbits = N*K;
 nbMod = Nbits/N;
 if(garde < L)
