@@ -22,14 +22,14 @@ RSB = 5; % Définit l'amplitude du bruit
 
 K = 500; % symboles OFDM d'une trame OFDM
 N = 128; % Nombre de sous-porteuses totales
-garde = 16; % intervalle de garde
+garde = 8; % intervalle de garde
 annulation = 4;
-L = 50; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
+L = 16; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
 
 %% PARAMÊTRES CALCULÉS
 % -------------------------------------------------------------------------
-% NbTrames = 2;
-Nbits = N*K;
+nbTrames = 64;
+Nbits = N*K*nbTrames;
 nbMod = Nbits/N;
 if(garde < L)
     fprintf("Warning : De l'IES va apparaitre à cause d'un intervalle de garde trop court.\n");
@@ -71,18 +71,18 @@ end
 
 
 %% Préfix
-matriceTrames = reshape(echantillon, [N K]);
+matriceTrames = reshape(echantillon, [N K*nbTrames]);
 test1 = matriceTrames;
 if (PREFIX_CYCL_ON)
 
     % Série -> Parallèle
-    matriceTrames = reshape(echantillon, [N K]); % premiere trame = 1ere colonne
+    matriceTrames = reshape(echantillon, [N K*nbTrames]); % premiere trame = 1ere colonne
 
     suffixACopier = matriceTrames(end-garde+1:end,:);
     matriceTrames = [ suffixACopier ; matriceTrames ];
 
     % Parallèle -> Série
-    echantillon = reshape(matriceTrames, (garde+N)*K, 1);
+    echantillon = reshape(matriceTrames, (garde+N)*K*nbTrames, 1);
 else
     garde = 0;
 end
@@ -91,10 +91,10 @@ end
 %% CANAL
 % -------------------------------------------------------------------------
 
-if (CANAL_TYPE == 'Rayleigh')
+if (strcmp(CANAL_TYPE, 'Rayleigh'))
     % Génération de gaussiennes complexes comme composantes de canal
     h = sqrt(1/2*L)*(randn(1,L)+1j*randn(1,L));
-elseif (CANAL_TYPE == 'AWGN')
+elseif (strmcpt(CANAL_TYPE, 'AWGN'))
     h = 1;
 end
 
@@ -114,7 +114,7 @@ y = filter(h, 1, y);
 
 % Série -> Parallèle
 
-matriceTrames = reshape(y, [N+garde K]); % premiere trame = 1ere colonne
+matriceTrames = reshape(y, [N+garde K*nbTrames]); % premiere trame = 1ere colonne
 
 %% On enlève le prefix
 
@@ -134,13 +134,13 @@ test2 = matriceTrames;
 matriceTrames = fft(matriceTrames, N)/sqrt(N);
 
 %% Parallèle -> Série
-symbolesRecus = reshape(matriceTrames, N*K, 1);
+symbolesRecus = reshape(matriceTrames, N*K*nbTrames, 1);
 
 %% Egaliseur
 
 %
 if(EGALISEUR_ON)
-    Hprep = repmat(H.', 500, 1); % .' parce qu'on veut pas le conjugué mais la transposée
+    Hprep = repmat(H.', K*nbTrames, 1); % .' parce qu'on veut pas le conjugué mais la transposée
     symbolesRecus = symbolesRecus./Hprep;
 end
 

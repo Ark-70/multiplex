@@ -132,10 +132,10 @@ T_tx      = T_tx+toc(tx_tic); % Mesure du débit d'encodage fin de l'émetteur
 %% CANAL
 % -------------------------------------------------------------------------
 
-if (strcmp(CANAL_TYPE, 'Rayleigh'))
+if (strcmpCANAL_TYPE == 'Rayleigh')
     % Génération de gaussiennes complexes comme composantes de canal
     h = sqrt(1/2*L)*(randn(1,L)+1j*randn(1,L));
-elseif (strmcpt(CANAL_TYPE, 'AWGN'))
+elseif (CANAL_TYPE == 'AWGN')
     h = 1;
 end
 
