@@ -8,7 +8,7 @@ addpath("teb_libs");
 % Paramêtres de la chaîne de com
 
 PREFIX_CYCL_ON = 1;
-BRUIT_ON = 0;
+BRUIT_ON = 1;
 CANAL_TYPE = 'Rayleigh'; % 'Rayleigh' ou 'AWGN'
 ANNULATION_ON = 0;
 EGALISEUR_ON = 1;
@@ -28,7 +28,7 @@ K = 500; % symboles OFDM d'une trame OFDM
 N = 128; % Nombre de sous-porteuses totales
 garde = 8; % intervalle de garde
 annulation = 4;
-L = 16; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
+L = 50; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
 nbTrames = 64; % = Nbits/500/128 == toute la matrice temps-frequence OFDM
 
 %% PARAMÊTRES CALCULÉS
@@ -124,6 +124,8 @@ if (PREFIX_CYCL_ON)
 
     % Parallèle -> Série
     echantillon = reshape(matriceTrames, (garde+N)*K*nbTrames, 1);
+else
+    garde = 0;
 end
 
 T_tx      = T_tx+toc(tx_tic); % Mesure du débit d'encodage fin de l'émetteur
@@ -131,13 +133,6 @@ T_tx      = T_tx+toc(tx_tic); % Mesure du débit d'encodage fin de l'émetteur
 
 %% CANAL
 % -------------------------------------------------------------------------
-
-if (strcmp(CANAL_TYPE, 'Rayleigh'))
-    % Génération de gaussiennes complexes comme composantes de canal
-    h = sqrt(1/2*L)*(randn(1,L)+1j*randn(1,L));
-elseif (strmcpt(CANAL_TYPE, 'AWGN'))
-    h = 1;
-end
 
 if (BRUIT_ON)
     bruit = calculerBruit(RSB, echantillon);
