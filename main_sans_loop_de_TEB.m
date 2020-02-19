@@ -6,7 +6,7 @@ clear all, close all, clc;
 % Paramêtres de la chaîne de com
 
 PREFIX_CYCL_ON = 1;
-BRUIT_ON = 0;
+BRUIT_ON = 1;
 CANAL_TYPE = 'Rayleigh'; % 'Rayleigh' ou 'AWGN'
 ANNULATION_ON = 0;
 EGALISEUR_ON = 1;
@@ -16,7 +16,7 @@ EGALISEUR_ON = 1;
 M=2; % M-PSK
 Ts = 0.05e-6;
 Fe = 1/Ts;
-RSB = 5; % Définit l'amplitude du bruit
+RSB = 1; % Définit l'amplitude du bruit
 
 % Constantes OFDM
 
@@ -40,6 +40,16 @@ end
 PSKMod   = comm.PSKModulator(M,'BitInput',true,'PhaseOffset',0);
 PSKDemod = comm.PSKDemodulator(M);
 errorRate = comm.ErrorRate;
+
+% préparation canal
+
+if (strcmp(CANAL_TYPE, 'Rayleigh'))
+    % Génération de gaussiennes complexes comme composantes de canal
+    h = sqrt(1/2*L)*(randn(1,L)+1j*randn(1,L));
+elseif (strcmp(CANAL_TYPE, 'AWGN'))
+    h = 1;
+end
+H = fft(h, N);
 
 %% CHAÎNE DE COM
 % -------------------------------------------------------------------------
@@ -90,15 +100,6 @@ end
 
 %% CANAL
 % -------------------------------------------------------------------------
-
-if (strcmp(CANAL_TYPE, 'Rayleigh'))
-    % Génération de gaussiennes complexes comme composantes de canal
-    h = sqrt(1/2*L)*(randn(1,L)+1j*randn(1,L));
-elseif (strmcpt(CANAL_TYPE, 'AWGN'))
-    h = 1;
-end
-
-H = fft(h, N);
 
 if (BRUIT_ON)
     bruit = calculerBruit(RSB, echantillon);

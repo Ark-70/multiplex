@@ -8,7 +8,7 @@ addpath("teb_libs");
 % Paramêtres de la chaîne de com
 
 PREFIX_CYCL_ON = 1;
-BRUIT_ON = 1;
+BRUIT_ON = 0;
 CANAL_TYPE = 'Rayleigh'; % 'Rayleigh' ou 'AWGN'
 ANNULATION_ON = 0;
 EGALISEUR_ON = 1;
@@ -28,7 +28,7 @@ K = 500; % symboles OFDM d'une trame OFDM
 N = 128; % Nombre de sous-porteuses totales
 garde = 8; % intervalle de garde
 annulation = 4;
-L = 50; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
+L = 20; % Nombre de coefficients frequenciels du canal
 nbTrames = 64; % = Nbits/500/128 == toute la matrice temps-frequence OFDM
 
 %% PARAMÊTRES CALCULÉS
@@ -38,7 +38,10 @@ Nbits = N*K*nbTrames;
 nbMod = Nbits/N;
 
 if (garde < L)
-    fprintf("Warning : De l'IES va apparaitre à cause d'un intervalle de garde trop court.\n");
+    fprintf(2, "Attention : De l'IES va apparaitre à cause d'un intervalle de garde trop court.\n");
+end
+if (~BRUIT_ON)
+    fprintf(2, "Attention : BRUIT_ON est à 0 ; le bruit est désactivé. On verra donc une courbe constante.\n");
 end
 
 if (~PREFIX_CYCL_ON)
@@ -55,10 +58,12 @@ PSKMod   = comm.PSKModulator(Mmod,'BitInput',true,'PhaseOffset',0);
 PSKDemod = comm.PSKDemodulator(Mmod);
 stat_erreur = comm.ErrorRate;
 
-if (strcmp(CANAL_TYPE, 'Rayleigh')==0 )
+% préparation canal
+
+if (strcmp(CANAL_TYPE, 'Rayleigh'))
     % Génération de gaussiennes complexes comme composantes de canal
     h = sqrt(1/2*L)*(randn(1,L)+1j*randn(1,L));
-elseif (strcmp(CANAL_TYPE, 'AWGN')==0 )
+elseif (strcmp(CANAL_TYPE, 'AWGN'))
     h = 1;
 end
 H = fft(h, N);
