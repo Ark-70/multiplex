@@ -8,7 +8,7 @@ addpath("teb_libs");
 % Paramêtres de la chaîne de com
 
 PREFIX_CYCL_ON = 1;
-BRUIT_ON = 0;
+BRUIT_ON = 1;
 CANAL_TYPE = 'Rayleigh'; % 'Rayleigh' ou 'AWGN'
 ANNULATION_ON = 0;
 EGALISEUR_ON = 1;
@@ -20,7 +20,7 @@ RSB_SOUS_PORTEUSE_EN_PLOT = 1;
 Mmod=2; % M-PSK
 Ts = 0.05e-6;
 Fe = 1/Ts;
-RSB = 5; % Définit l'amplitude du bruit
+RSB = 20; % Définit l'amplitude du bruit par défaut (sans TEB_LOOP)
 
 % Constantes OFDM
 
@@ -28,7 +28,7 @@ K = 500; % symboles OFDM d'une trame OFDM
 N = 128; % Nombre de sous-porteuses totales
 garde = 8; % intervalle de garde
 annulation = 4;
-L = 20; % Nombre de coefficients frequenciels du canal
+L = 16; % Nombre de coefficients frequenciels du canal
 nbTrames = 64; % = Nbits/500/128 == toute la matrice temps-frequence OFDM
 
 %% PARAMÊTRES CALCULÉS
@@ -258,7 +258,7 @@ ylim([1e-6 1])
 grid on
 xlabel('$\frac{E_b}{N_0}$ en dB','Interpreter', 'latex', 'FontSize',14)
 ylabel('TEB','Interpreter', 'latex', 'FontSize',14)
-title('TEB pour chaque code');
+title('TEB avec Cp = 8 et L = 16');
 legend(['OFDM sur canal Rayleigh L=16' newline '(EbN0 moyen des sous-porteuses)'], 'BPSK sur canal Rayleigh L=16');
 
 

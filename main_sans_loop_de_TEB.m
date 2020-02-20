@@ -6,7 +6,7 @@ clear all, close all, clc;
 % Paramêtres de la chaîne de com
 
 PREFIX_CYCL_ON = 1;
-BRUIT_ON = 1;
+BRUIT_ON = 0;
 CANAL_TYPE = 'Rayleigh'; % 'Rayleigh' ou 'AWGN'
 ANNULATION_ON = 0;
 EGALISEUR_ON = 1;
@@ -16,15 +16,15 @@ EGALISEUR_ON = 1;
 M=2; % M-PSK
 Ts = 0.05e-6;
 Fe = 1/Ts;
-RSB = 1; % Définit l'amplitude du bruit
+RSB = 20; % Définit l'amplitude du bruit
 
 % Constantes OFDM
 
 K = 500; % symboles OFDM d'une trame OFDM
 N = 128; % Nombre de sous-porteuses totales
-garde = 8; % intervalle de garde
+garde = 2; % intervalle de garde
 annulation = 4;
-L = 16; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
+L = 2; % Composantes cheloues du filtre (si 2 => 2 dirac -> un cos)
 
 %% PARAMÊTRES CALCULÉS
 % -------------------------------------------------------------------------
